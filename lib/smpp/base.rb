@@ -23,6 +23,8 @@ module Smpp
       # associated message ID, and then create a pending delivery report.
       @ack_ids = {}
 
+      @submitted_message_ids = {}
+
       ed = @config[:enquire_link_delay_secs] || 5
       comm_inactivity_timeout = 2 * ed
     end
@@ -194,6 +196,7 @@ module Smpp
         if !mt_message_id
           raise "Got SubmitSmResponse for unknown sequence_number: #{pdu.sequence_number}"
         end
+        @submitted_message_ids[mt_message_id] = pdu.message_id
         if pdu.command_status != Pdu::Base::ESME_ROK
           logger.error "Error status in SubmitSmResponse: #{pdu.command_status}"
           if @delegate.respond_to?(:message_rejected)
@@ -220,6 +223,14 @@ module Smpp
           if @delegate.respond_to?(:message_accepted)
             @delegate.message_accepted(self, mt_message_id, pdu)
           end
+        end
+      when Pdu::CancelSmResponse
+        mt_message_id = @ack_ids.delete(pdu.sequence_number)
+        if !mt_message_id
+          raise "Got SubmitSmResponse for unknown sequence_number: #{pdu.sequence_number}"
+        end
+        if @delegate.respond_to?(:message_canceled)
+          @delegate.message_canceled(self, mt_message_id, pdu)
         end
       when Pdu::BindReceiverResponse
         case pdu.command_status

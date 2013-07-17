@@ -29,6 +29,23 @@ class Smpp::Transceiver < Smpp::Base
     end
   end
 
+  def cancel_mt(message_id, source_addr, destination_addr, options={})
+    logger.debug "Canceling MT: #{message_id}"
+    if @state == :bound
+      smsc_message_id = @submitted_message_ids[message_id]
+      unless smsc_message_id.present?
+        raise "message with message_id=#{message_id} haven't submitted yet"
+      end
+
+      pdu = Pdu::CancelSm.new(smsc_message_id, source_addr, destination_addr, options)
+      write_pdu pdu
+
+      @ack_ids[pdu.sequence_number] = message_id
+    else
+      raise InvalidStateException, "Transceiver is unbound. Cannot send MT messages."
+    end
+  end
+
   # Send a concatenated message with a body of > 160 characters as multiple messages.
   def send_concat_mt(message_id, source_addr, destination_addr, message, options = {})
     logger.debug "Sending concatenated MT: #{message}"
