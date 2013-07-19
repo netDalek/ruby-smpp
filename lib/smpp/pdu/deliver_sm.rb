@@ -7,7 +7,7 @@ class Smpp::Pdu::DeliverSm < Smpp::Pdu::Base
               :destination_addr, :esm_class, :protocol_id, :priority_flag, :schedule_delivery_time, 
               :validity_period, :registered_delivery, :replace_if_present_flag, :data_coding, 
               :sm_default_msg_id, :sm_length, :stat, :msg_reference, :udh, :short_message,
-              :message_state, :receipted_message_id, :optional_parameters
+              :message_state, :receipted_message_id, :optional_parameters, :err
 
   @@encoder = nil
 
@@ -36,6 +36,7 @@ class Smpp::Pdu::DeliverSm < Smpp::Pdu::Base
 
     #fields set for delivery report
     @stat                    = options[:stat]
+    @err                     = options[:err]
     @msg_reference           = options[:msg_reference]
     @receipted_message_id    = options[:receipted_message_id]
     @message_state           = options[:message_state]
@@ -131,7 +132,12 @@ class Smpp::Pdu::DeliverSm < Smpp::Pdu::Base
       if stat_match
         options[:stat] = stat_match[1]
       end
-      
+
+      err_match = short_message.match(/err:([^ ]*)/) || remaining_bytes.match(/err:([^ ]*)/)
+      if err_match
+        options[:err] = err_match[1]
+      end
+
       Smpp::Base.logger.debug "DeliverSM with source_addr=#{source_addr}, destination_addr=#{destination_addr}, msg_reference=#{options[:msg_reference]}, stat=#{options[:stat]}"
     else
       Smpp::Base.logger.debug "DeliverSM with source_addr=#{source_addr}, destination_addr=#{destination_addr}"
