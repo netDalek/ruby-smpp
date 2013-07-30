@@ -29,7 +29,7 @@ class Smpp::Pdu::SubmitSm < Smpp::Pdu::Base
     @replace_if_present_flag = options[:replace_if_present_flag]?options[:replace_if_present_flag]:0
     @data_coding             = options[:data_coding]?options[:data_coding]:3 # iso-8859-1
     @sm_default_msg_id       = options[:sm_default_msg_id]?options[:sm_default_msg_id]:0
-    @short_message           = short_message
+    @short_message           = short_message.force_encoding("ASCII-8BIT")
     payload                  = @udh ? @udh + @short_message : @short_message 
     @sm_length               = payload.length
     

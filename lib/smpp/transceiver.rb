@@ -16,7 +16,7 @@ class Smpp::Transceiver < Smpp::Base
   # Send an MT SMS message. Delegate will receive message_accepted callback when SMSC 
   # acknowledges, or the message_rejected callback upon error
   def send_mt(message_id, source_addr, destination_addr, short_message, options={})
-    logger.debug "Sending MT: #{short_message}"
+    logger.debug "Sending MT: #{short_message.encode("UTF-8")}"
     if @state == :bound
       pdu = Pdu::SubmitSm.new(source_addr, destination_addr, short_message, options)
       write_pdu pdu
